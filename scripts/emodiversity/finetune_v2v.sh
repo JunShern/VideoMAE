@@ -1,0 +1,17 @@
+set -x
+
+REPO_PATH='PATH/TO/VideoMAE'
+DATA_PATH="PATH/TO/v2v_dataset"
+
+MODEL_PATH="${REPO_PATH}/models/kinetics400-ViTB-1600-16x5x3-pretrain.pth"
+OUTPUT_DIR="${REPO_PATH}/output/"
+
+python run_v2v_finetuning.py \
+    --data_dir ${DATA_PATH} \
+    --results_path ${OUTPUT_DIR} \
+    --checkpoint ${MODEL_PATH} \
+    --wandb 1 \
+    --disable_tqdm 1 \
+    --num_gpus 4 \
+    --batch_size 32 \
+    --num_workers 2
