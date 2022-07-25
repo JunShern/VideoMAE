@@ -14,6 +14,9 @@ export OMP_NUM_THREADS=1
 JOB_NAME="finetune-v2v"
 GPUS=${GPUS:-1}
 
+RUN_PATH='PATH/TO/VideoMAE/scripts/emodiversity'
+cd $RUN_PATH
+
 # batch_size can be adjusted according to the graphics card
 # srun -p $PARTITION \
 srun --job-name=${JOB_NAME} \

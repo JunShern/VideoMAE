@@ -16,6 +16,9 @@ GPUS=${GPUS:-4}
 GPUS_PER_NODE=${GPUS_PER_NODE:-4}
 CPUS_PER_TASK=${CPUS_PER_TASK:-8}
 
+RUN_PATH='PATH/TO/VideoMAE/scripts/emodiversity'
+cd $RUN_PATH
+
 # batch_size can be adjusted according to the graphics card
 srun --job-name=${JOB_NAME} \
     --gres=gpu:${GPUS_PER_NODE} \

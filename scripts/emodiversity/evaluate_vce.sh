@@ -2,9 +2,9 @@ set -x
 
 # MODIFY WITH YOUR OWN PATH
 REPO_PATH='PATH/TO/VideoMAE'
+MODEL_PATH='PATH/TO/TRAINED_MODEL.pt'
 
 DATA_PATH="${REPO_PATH}/dataset/vce_for_videomae_dataset"
-MODEL_PATH="${REPO_PATH}/models/kinetics400-ViTB-1600-16x5x3-pretrain.pth"
 OUTPUT_DIR="${REPO_PATH}/output/"
 
 cd ${REPO_PATH}
@@ -30,4 +30,5 @@ python -u run_class_finetuning.py \
     --dist_eval \
     --test_num_segment 2 \
     --test_num_crop 3 \
-    --enable_deepspeed
+    --enable_deepspeed \
+    --eval
