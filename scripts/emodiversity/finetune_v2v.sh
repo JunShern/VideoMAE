@@ -1,3 +1,4 @@
+#!/bin/bash
 set -x
 
 # MODIFY WITH YOUR OWN PATH

@@ -1,10 +1,11 @@
+#!/bin/bash
 set -x
 
 # MODIFY WITH YOUR OWN PATH
 REPO_PATH='PATH/TO/VideoMAE'
 MODEL_PATH='PATH/TO/TRAINED_MODEL.pt'
 
-DATA_PATH="${REPO_PATH}/dataset/vce_for_videomae_dataset"
+DATA_PATH="${REPO_PATH}/dataset/vce_for_videomae"
 OUTPUT_DIR="${REPO_PATH}/output/"
 
 cd ${REPO_PATH}

@@ -1,9 +1,10 @@
+#!/bin/bash
 set -x
 
 # MODIFY WITH YOUR OWN PATH
 REPO_PATH='PATH/TO/VideoMAE'
 
-DATA_PATH="${REPO_PATH}/dataset/vce_for_videomae_dataset"
+DATA_PATH="${REPO_PATH}/dataset/vce_for_videomae"
 MODEL_PATH="${REPO_PATH}/models/kinetics400-ViTB-1600-16x5x3-pretrain.pth"
 OUTPUT_DIR="${REPO_PATH}/output/"
 
