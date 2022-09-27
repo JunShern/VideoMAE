@@ -452,13 +452,7 @@ def main(args, ds_init):
         args.weight_decay, args.weight_decay_end, args.epochs, num_training_steps_per_epoch)
     print("Max WD = %.7f, Min WD = %.7f" % (max(wd_schedule_values), min(wd_schedule_values)))
 
-    if mixup_fn is not None:
-        # smoothing is handled with mixup label transform
-        criterion = SoftTargetCrossEntropy()
-    elif args.smoothing > 0.:
-        criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
-    else:
-        criterion = torch.nn.CrossEntropyLoss()
+    criterion = torch.nn.BCEWithLogitsLoss()
 
     print("criterion = %s" % str(criterion))
 
@@ -468,14 +462,14 @@ def main(args, ds_init):
 
     if args.eval:
         preds_file = os.path.join(args.output_dir, str(global_rank) + '.txt')
-        test_stats = final_test(data_loader_test, model, device, preds_file)
+        test_stats = final_test(data_loader_test, model, device, preds_file, criterion=criterion)
         torch.distributed.barrier()
         if global_rank == 0:
             print("Start merging results...")
-            final_top1 ,final_top5 = merge(args.output_dir, num_tasks)
-            print(f"Accuracy of the network on the {len(dataset_test)} test videos: Top-1: {final_top1:.2f}%, Top-5: {final_top5:.2f}%")
+            final_top1 ,final_top3 = merge(args.output_dir, num_tasks)
+            print(f"Accuracy of the network on the {len(dataset_test)} test videos: Top-1: {final_top1:.2f}%, Top-3: {final_top3:.2f}%")
             log_stats = {'Final top-1': final_top1,
-                        'Final Top-5': final_top1}
+                        'Final Top-3': final_top1}
             if args.output_dir and utils.is_main_process():
                 with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                     f.write(json.dumps(log_stats) + "\n")
@@ -503,7 +497,7 @@ def main(args, ds_init):
                     args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
                     loss_scaler=loss_scaler, epoch=epoch, model_ema=model_ema)
         if data_loader_val is not None:
-            test_stats = validation_one_epoch(data_loader_val, model, device)
+            test_stats = validation_one_epoch(data_loader_val, model, device, criterion=criterion)
             print(f"Accuracy of the network on the {len(dataset_val)} val videos: {test_stats['acc1']:.1f}%")
             if max_accuracy < test_stats["acc1"]:
                 max_accuracy = test_stats["acc1"]
@@ -515,7 +509,7 @@ def main(args, ds_init):
             print(f'Max accuracy: {max_accuracy:.2f}%')
             if log_writer is not None:
                 log_writer.update(val_acc1=test_stats['acc1'], head="perf", step=epoch)
-                log_writer.update(val_acc5=test_stats['acc5'], head="perf", step=epoch)
+                log_writer.update(val_acc3=test_stats['acc3'], head="perf", step=epoch)
                 log_writer.update(val_loss=test_stats['loss'], head="perf", step=epoch)
 
             log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
@@ -533,14 +527,14 @@ def main(args, ds_init):
                 f.write(json.dumps(log_stats) + "\n")
 
     preds_file = os.path.join(args.output_dir, str(global_rank) + '.txt')
-    test_stats = final_test(data_loader_test, model, device, preds_file)
+    test_stats = final_test(data_loader_test, model, device, preds_file, criterion=criterion)
     torch.distributed.barrier()
     if global_rank == 0:
         print("Start merging results...")
-        final_top1 ,final_top5 = merge(args.output_dir, num_tasks)
-        print(f"Accuracy of the network on the {len(dataset_test)} test videos: Top-1: {final_top1:.2f}%, Top-5: {final_top5:.2f}%")
+        final_top1 ,final_top3 = merge(args.output_dir, num_tasks)
+        print(f"Accuracy of the network on the {len(dataset_test)} test videos: Top-1: {final_top1:.2f}%, Top-3: {final_top3:.2f}%")
         log_stats = {'Final top-1': final_top1,
-                    'Final Top-5': final_top5}
+                    'Final Top-3': final_top3}
         if args.output_dir and utils.is_main_process():
             with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")

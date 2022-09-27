@@ -2,11 +2,11 @@
 set -x
 
 # MODIFY WITH YOUR OWN PATH
-REPO_PATH='PATH/TO/VideoMAE'
+REPO_PATH='/path/to/emodiversity/VideoMAE'
 
-DATA_PATH="${REPO_PATH}/dataset/vce_for_videomae"
+DATA_PATH="/path/to/vce_dataset/"
 MODEL_PATH="${REPO_PATH}/models/kinetics400-ViTB-1600-16x5x3-pretrain.pth"
-OUTPUT_DIR="${REPO_PATH}/output/"
+OUTPUT_DIR="${REPO_PATH}/output/my_new_run/"
 
 cd ${REPO_PATH}
 python -u run_class_finetuning.py \
@@ -31,4 +31,4 @@ python -u run_class_finetuning.py \
     --dist_eval \
     --test_num_segment 2 \
     --test_num_crop 3 \
-    --enable_deepspeed
+    # --enable_deepspeed

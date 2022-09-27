@@ -11,6 +11,7 @@ import utils
 
 def train_class_batch(model, samples, target, criterion):
     outputs = model(samples)
+    assert target.shape == outputs.shape, f"{target.shape} != {outputs.shape}"
     loss = criterion(outputs, target)
     return loss, outputs
 
@@ -55,8 +56,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         samples = samples.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
 
-        if mixup_fn is not None:
-            samples, targets = mixup_fn(samples, targets)
+        # if mixup_fn is not None:
+        #     samples, targets = mixup_fn(samples, targets)
 
         if loss_scaler is None:
             samples = samples.half()
@@ -140,8 +141,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
 
 @torch.no_grad()
-def validation_one_epoch(data_loader, model, device):
-    criterion = torch.nn.CrossEntropyLoss()
+def validation_one_epoch(data_loader, model, device, criterion=torch.nn.CrossEntropyLoss()):
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Val:'
@@ -160,24 +160,24 @@ def validation_one_epoch(data_loader, model, device):
             output = model(videos)
             loss = criterion(output, target)
 
-        acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        target_class = torch.argmax(target, dim=1)
+        acc1, acc3 = accuracy(output, target_class, topk=(1, 3))
 
         batch_size = videos.shape[0]
         metric_logger.update(loss=loss.item())
         metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
-        metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
+        metric_logger.meters['acc3'].update(acc3.item(), n=batch_size)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
-          .format(top1=metric_logger.acc1, top5=metric_logger.acc5, losses=metric_logger.loss))
+    print('* Acc@1 {top1.global_avg:.3f} Acc@3 {top3.global_avg:.3f} loss {losses.global_avg:.3f}'
+          .format(top1=metric_logger.acc1, top3=metric_logger.acc3, losses=metric_logger.loss))
 
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
 
 @torch.no_grad()
-def final_test(data_loader, model, device, file):
-    criterion = torch.nn.CrossEntropyLoss()
+def final_test(data_loader, model, device, file, criterion=torch.nn.CrossEntropyLoss()):
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test:'
@@ -200,6 +200,7 @@ def final_test(data_loader, model, device, file):
             output = model(videos)
             loss = criterion(output, target)
 
+        target = torch.argmax(target, dim=1)
         for i in range(output.size(0)):
             string = "{} {} {} {} {}\n".format(ids[i], \
                                                 str(output.data[i].cpu().numpy().tolist()), \
@@ -208,23 +209,23 @@ def final_test(data_loader, model, device, file):
                                                 str(int(split_nb[i].cpu().numpy())))
             final_result.append(string)
 
-        acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        acc1, acc3 = accuracy(output, target, topk=(1, 3))
 
         batch_size = videos.shape[0]
         metric_logger.update(loss=loss.item())
         metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
-        metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
+        metric_logger.meters['acc3'].update(acc3.item(), n=batch_size)
 
     if not os.path.exists(file):
         os.mknod(file)
     with open(file, 'w') as f:
-        f.write("{}, {}\n".format(acc1, acc5))
+        f.write("{}, {}\n".format(acc1, acc3))
         for line in final_result:
             f.write(line)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
-          .format(top1=metric_logger.acc1, top5=metric_logger.acc5, losses=metric_logger.loss))
+    print('* Acc@1 {top1.global_avg:.3f} Acc@3 {top3.global_avg:.3f} loss {losses.global_avg:.3f}'
+          .format(top1=metric_logger.acc1, top3=metric_logger.acc3, losses=metric_logger.loss))
 
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
@@ -264,11 +265,11 @@ def merge(eval_path, num_tasks):
     p = Pool(64)
     ans = p.map(compute_video, input_lst)
     top1 = [x[1] for x in ans]
-    top5 = [x[2] for x in ans]
+    top3 = [x[2] for x in ans]
     pred = [x[0] for x in ans]
     label = [x[3] for x in ans]
-    final_top1 ,final_top5 = np.mean(top1), np.mean(top5)
-    return final_top1*100 ,final_top5*100
+    final_top1 ,final_top3 = np.mean(top1), np.mean(top3)
+    return final_top1*100 ,final_top3*100
 
 def compute_video(lst):
     i, video_id, data, label = lst
@@ -276,5 +277,5 @@ def compute_video(lst):
     feat = np.mean(feat, axis=0)
     pred = np.argmax(feat)
     top1 = (int(pred) == int(label)) * 1.0
-    top5 = (int(label) in np.argsort(-feat)[:5]) * 1.0
-    return [pred, top1, top5, int(label)]
+    top3 = (int(label) in np.argsort(-feat)[:3]) * 1.0
+    return [pred, top1, top3, int(label)]

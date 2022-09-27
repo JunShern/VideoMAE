@@ -43,10 +43,28 @@ class VideoClsDataset(Dataset):
         if VideoReader is None:
             raise ImportError("Unable to import `decord` which is required to read videos.")
 
-        import pandas as pd
-        cleaned = pd.read_csv(self.anno_path, header=None, delimiter=' ')
-        self.dataset_samples = list(cleaned.values[:, 0])
-        self.label_array = list(cleaned.values[:, 1])
+        import json
+        self.dataset_samples = []
+        self.label_array = []
+        with open(self.anno_path) as f:
+            labels_dict = json.load(f)
+            dict_items = list(labels_dict.items())
+            if mode == 'train':
+                dict_items = dict_items[:int(len(dict_items)*0.9)]
+            elif mode == 'validation':
+                dict_items = dict_items[int(len(dict_items)*0.9):]
+            for key, label_obj in dict_items:
+                
+                # Convert from 27-vector of emotion scores to a single classification label corresponding to the max-scoring emotion
+                emotions_and_scores = sorted(list(label_obj["emotions"].items())) # Make sure they are sorted alphabetically
+                scores = torch.tensor([score for emotion, score in emotions_and_scores])
+                # scores = (scores > 0).float()
+                path = str(os.path.join(self.data_path, label_obj['file']))
+                from pathlib import Path
+                assert Path(path).exists(), path
+
+                self.dataset_samples.append(path)
+                self.label_array.append(scores)
 
         if (mode == 'train'):
             pass
