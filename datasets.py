@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 from kinetics import VideoClsDataset, VideoMAE
+from vce import VCEVideoClsDataset
 from masking_generator import TubeMaskingGenerator
 from ssv2 import SSVideoClsDataset
 from transforms import *
@@ -198,7 +199,7 @@ def build_dataset(is_train, test_mode, args):
             mode = 'validation'
             anno_path = os.path.join(args.data_path, "train_labels.json")
 
-        dataset = VideoClsDataset(
+        dataset = VCEVideoClsDataset(
             anno_path=anno_path,
             data_path=args.data_path,
             mode=mode,
