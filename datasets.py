@@ -12,6 +12,7 @@ from vce import VCEVideoClsDataset
 from masking_generator import TubeMaskingGenerator
 from ssv2 import SSVideoClsDataset
 from transforms import *
+import vce_dense
 
 
 class DataAugmentationForVideoMAE(object):
@@ -190,31 +191,44 @@ def build_dataset(is_train, test_mode, args):
         mode = None
         anno_path = None
         if is_train is True:
-            mode = 'train'
-            anno_path = os.path.join(args.data_path, "train_labels.json")
-        elif test_mode is True:
-            mode = 'test'
-            anno_path = os.path.join(args.data_path, "test_labels.json")
+            dataset = vce_dense.VCEDataset(
+                dataset_path=args.data_path,
+                split='train',
+                frames_per_clip=args.num_frames,
+                step_between_clips=1,
+                frame_rate=args.sampling_rate,
+                # From VideoClsDataset
+                mode='train',
+                crop_size=args.input_size,
+                args=args,
+            )
         else:
-            mode = 'validation'
-            anno_path = os.path.join(args.data_path, "train_labels.json")
+        # if is_train is True:
+        #     mode = 'train'
+        #     anno_path = os.path.join(args.data_path, "train_labels.json")
+            if test_mode is True:
+                mode = 'test'
+                anno_path = os.path.join(args.data_path, "test_labels.json")
+            else:
+                mode = 'validation'
+                anno_path = os.path.join(args.data_path, "train_labels.json")
 
-        dataset = VCEVideoClsDataset(
-            anno_path=anno_path,
-            data_path=args.data_path,
-            mode=mode,
-            clip_len=args.num_frames,
-            frame_sample_rate=args.sampling_rate,
-            num_segment=1,
-            test_num_segment=args.test_num_segment,
-            test_num_crop=args.test_num_crop,
-            num_crop=1 if not test_mode else 3,
-            keep_aspect_ratio=True,
-            crop_size=args.input_size,
-            short_side_size=args.short_side_size,
-            new_height=256,
-            new_width=320,
-            args=args)
+            dataset = VCEVideoClsDataset(
+                anno_path=anno_path,
+                data_path=args.data_path,
+                mode=mode,
+                clip_len=args.num_frames,
+                frame_sample_rate=args.sampling_rate,
+                num_segment=1,
+                test_num_segment=args.test_num_segment,
+                test_num_crop=args.test_num_crop,
+                num_crop=1 if not test_mode else 3,
+                keep_aspect_ratio=True,
+                crop_size=args.input_size,
+                short_side_size=args.short_side_size,
+                new_height=256,
+                new_width=320,
+                args=args)
         nb_classes = 27
     else:
         raise NotImplementedError()
