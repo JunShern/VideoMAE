@@ -191,7 +191,7 @@ def build_dataset(is_train, test_mode, args):
         mode = None
         anno_path = None
         if is_train is True:
-            dataset = vce_dense.VCEDataset(
+            dataset = vce_dense.TrainDataset(vce_dense.VCEDataset(
                 dataset_path=args.data_path,
                 split='train',
                 frames_per_clip=args.num_frames,
@@ -201,7 +201,7 @@ def build_dataset(is_train, test_mode, args):
                 mode='train',
                 crop_size=args.input_size,
                 args=args,
-            )
+            ))
         else:
         # if is_train is True:
         #     mode = 'train'
