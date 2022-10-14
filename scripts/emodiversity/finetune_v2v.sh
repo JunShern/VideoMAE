@@ -15,6 +15,6 @@ python run_v2v_finetuning.py \
     --checkpoint ${MODEL_PATH} \
     --wandb 1 \
     --disable_tqdm 1 \
-    --num_gpus 4 \
-    --batch_size 32 \
+    --num_gpus 1 \
+    --batch_size 4 \
     --num_workers 2

@@ -2,7 +2,7 @@
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:1
 #SBATCH --time=48:00:00
 #SBATCH --mem=64GB
 #SBATCH --job-name=finetune_vce

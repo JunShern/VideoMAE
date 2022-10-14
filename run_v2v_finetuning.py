@@ -91,7 +91,7 @@ def train(args, model, train_data, test_data, listwise_data, use_wandb=True, acc
         wandb.init(project='WellbeingVideo', entity='junshern')
         wandb.config.update(args) # add all argparse args as config variables
     train_loader = torch.utils.data.DataLoader(
-            train_data, batch_size=args.batch_size, shuffle=False,
+            train_data, batch_size=args.batch_size, shuffle=True,
             num_workers=args.num_workers, collate_fn=collate_pairwise_batch, pin_memory=True, drop_last=True)
     test_loader = torch.utils.data.DataLoader(
             test_data, batch_size=args.batch_size, shuffle=False,
